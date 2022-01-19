@@ -8,12 +8,6 @@ class User {
   }
 }
 
-
-class Data {
-  hash: string;
-}
-
-
 class Block {
   hash: string;
   prev_hash: string;
@@ -34,7 +28,6 @@ class Block {
     else return false;
   }
 }
-
 
 class Miner {
   name: string;
