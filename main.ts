@@ -1,35 +1,67 @@
-class User {
-  public_key: string;
-  secret_key: string;
-
-  generateKey(password: string): void {
-    this.public_key = password;
-    this.secret_key = password.substr(-3);
-  }
-}
+declare function require(name: string);
+const SHA256 = require('crypto-js/sha256');
 
 class Block {
+  index: number;
   hash: string;
-  prev_hash: string;
+  prevHash: string;
+  timestamp: any;
+  data: any;
 
-  from: User;
-  signature: string;
-
-  // Signature
-  sign(secret_key: string): void {
-    this.signature = `${this.hash}/${this.data.hash}/${secret_key}`;
-    console.log(this.signature);
+  constructor(
+    index: number,
+    timestamp: any,
+    data: any,
+    prevHash: string = ''
+  ) {
+    this.index = index;
+    this.prevHash = prevHash;
+    this.timestamp = timestamp;
+    this.data = data;
+    this.hash = this.calculateHash();
   }
 
-  // Verification
-  verify(public_key: string): boolean {
-    let signature = `${this.hash}/${this.data.hash}/${public_key.substr(-3)}`;
-    if (this.signature === signature) return true;
-    else return false;
+  calculateHash(): string {
+    return SHA256(this.index + this.prevHash + this.timestamp + JSON.stringify(this.data)).toString();
   }
 }
 
-class Miner {
-  name: string;
-  coin: number;
+class Blockchain {
+  chain: Array<Block>;
+
+  constructor() {
+    this.chain = [this.createGenesisBlock()];
+  }
+
+  createGenesisBlock(): Block {
+    return new Block(0, '01/01/2017', 'Genesis Block', '0');
+  }
+
+  getLatestBlock(): Block {
+    return this.chain[this.chain.length - 1];
+  }
+
+  addBlock(newBlock: Block): void {
+    newBlock.prevHash = this.getLatestBlock().hash;
+    newBlock.hash = newBlock.calculateHash();
+    this.chain.push(newBlock);
+  }
+
+  isChainValid() {
+    for (let i = 1; i < this.chain.length; i++) {
+      const currBlock = this.chain[i];
+      const prevBlock = this.chain[i - 1];
+      if (currBlock.hash !== currBlock.calculateHash()) return false;
+      if (currBlock.prevHash !== prevBlock.hash) return false;
+    }
+
+    return true;
+  }
 }
+
+let soqqaCoin = new Blockchain();
+soqqaCoin.addBlock(new Block(1, '10/07/2017', { amount: 4 }));
+soqqaCoin.addBlock(new Block(2, '12/07/2017', { amount: 10 }));
+
+console.log(JSON.stringify(soqqaCoin, null, 4));
+console.log('Is blockchain valid?', soqqaCoin.isChainValid());
